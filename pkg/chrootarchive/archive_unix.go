@@ -32,6 +32,7 @@ func untar() {
 	flag.Parse()
 
 	var options *archive.TarOptions
+	options.InUserNS = true
 
 	//read the options from the pipe "ExtraFiles"
 	if err := json.NewDecoder(os.NewFile(3, "options")).Decode(&options); err != nil {
