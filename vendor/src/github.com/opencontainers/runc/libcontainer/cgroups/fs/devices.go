@@ -5,6 +5,7 @@ package fs
 import (
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/configs"
+	"github.com/opencontainers/runc/libcontainer/system"
 )
 
 type DevicesGroup struct {
@@ -15,6 +16,9 @@ func (s *DevicesGroup) Name() string {
 }
 
 func (s *DevicesGroup) Apply(d *cgroupData) error {
+	if system.RunningInUserNS() {
+		return nil
+	}
 	dir, err := d.join("devices")
 	if err != nil {
 		// We will return error even it's `not found` error, devices
@@ -30,6 +34,9 @@ func (s *DevicesGroup) Apply(d *cgroupData) error {
 }
 
 func (s *DevicesGroup) Set(path string, cgroup *configs.Cgroup) error {
+	if system.RunningInUserNS() {
+		return nil
+	}
 	if !cgroup.Resources.AllowAllDevices {
 		if err := writeFile(path, "devices.deny", "a"); err != nil {
 			return err
