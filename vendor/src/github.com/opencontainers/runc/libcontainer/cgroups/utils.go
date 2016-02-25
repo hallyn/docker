@@ -128,10 +128,17 @@ func GetCgroupMounts() ([]Mount, error) {
 		allMap[s] = true
 	}
 
+	cgroupNamespacesEnabled := PathExists("/proc/self/ns/cgroup")
+
 	res := []Mount{}
 	for _, mount := range mounts {
 		if mount.Fstype == "cgroup" {
 			m := Mount{Mountpoint: mount.Mountpoint, Root: mount.Root}
+			// shortcut - ignore mount.Root if we have cgoup namespaces.
+			// the right thing would be to actually verify with /proc/self/cgroup
+			if cgroupNamespacesEnabled {
+				m.Root = "/"
+			}
 
 			for _, opt := range strings.Split(mount.VfsOpts, ",") {
 				if strings.HasPrefix(opt, cgroupNamePrefix) {
