@@ -124,6 +124,7 @@ func (m Mount) GetThisCgroupDir(cgroups map[string]string) (string, error) {
 func getCgroupMountsHelper(ss map[string]bool, mi io.Reader) ([]Mount, error) {
 	res := make([]Mount, 0, len(ss))
 	scanner := bufio.NewScanner(mi)
+	cgroupNamespacesEnabled := PathExists("/proc/self/ns/cgroup")
 	for scanner.Scan() {
 		txt := scanner.Text()
 		sepIdx := strings.Index(txt, " - ")
@@ -136,7 +137,11 @@ func getCgroupMountsHelper(ss map[string]bool, mi io.Reader) ([]Mount, error) {
 		fields := strings.Split(txt, " ")
 		m := Mount{
 			Mountpoint: fields[4],
-			Root:       fields[3],
+		}
+		if cgroupNamespacesEnabled {
+			m.Root = "/"
+		} else {
+			m.Root = fields[3]
 		}
 		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
 			if strings.HasPrefix(opt, cgroupNamePrefix) {
